@@ -56,6 +56,10 @@ func (h *GatewayHandler) ProxyRequest(serviceURL string) fiber.Handler {
 				c.Response().Header.Add(k, val)
 			}
 		}
+		// Ensure CORS headers are present on proxied responses
+		c.Set("Access-Control-Allow-Origin", "*")
+		c.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
+		c.Set("Access-Control-Allow-Headers", "*")
 
 		return c.Status(resp.StatusCode).Send(body)
 	}
