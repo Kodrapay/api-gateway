@@ -5,31 +5,28 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/kodra-pay/api-gateway/internal/config"
 	"github.com/kodra-pay/api-gateway/internal/middleware"
 	"github.com/kodra-pay/api-gateway/internal/routes"
 )
 
 func main() {
-	cfg := config.Load("api-gateway", "7000")
+	cfg := config.Load("api-gateway", "8000")
 
 	app := fiber.New()
+	app.Use(recover.New())
+	app.Use(logger.New())
 	app.Use(middleware.RequestID())
+
+	// Enable CORS for frontend dashboards
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-		AllowHeaders: "*",
+		AllowOrigins:     "http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174",
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Request-ID",
 		AllowCredentials: true,
 	}))
-	app.Use(func(c *fiber.Ctx) error {
-		if c.Method() == fiber.MethodOptions {
-			c.Set("Access-Control-Allow-Origin", "*")
-			c.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-			c.Set("Access-Control-Allow-Headers", "*")
-			return c.SendStatus(fiber.StatusNoContent)
-		}
-		return c.Next()
-	})
 
 	routes.Register(app, cfg.ServiceName)
 
