@@ -21,11 +21,14 @@ func Register(app *fiber.App, serviceName string) {
 	app.All("/merchants/*", gateway.ProxyRequest("merchant-service:7002"))
 	app.All("/payment-links/*", gateway.ProxyRequest("merchant-service:7002"))
 	app.All("/payment-links", gateway.ProxyRequest("merchant-service:7002"))
+	app.All("/kyc/*", gateway.ProxyRequest("merchant-service:7002"))
+	app.All("/kyc", gateway.ProxyRequest("merchant-service:7002"))
 
 	// Admin Service (Port 7003)
 	app.All("/admin/*", gateway.ProxyRequest("admin-service:7003"))
 
 	// Transaction Service (Port 7004)
+	app.All("/transactions", gateway.ProxyRequest("transaction-service:7004"))
 	app.All("/transactions/*", gateway.ProxyRequest("transaction-service:7004"))
 
 	// Checkout Service (Port 7005)
@@ -41,6 +44,7 @@ func Register(app *fiber.App, serviceName string) {
 	app.All("/settlements/*", gateway.ProxyRequest("settlement-service:7008"))
 
 	// Payout Service (Port 7009)
+	app.All("/payouts", gateway.ProxyRequest("payout-service:7009"))
 	app.All("/payouts/*", gateway.ProxyRequest("payout-service:7009"))
 
 	// Virtual Account Service (Port 7010)
