@@ -19,6 +19,8 @@ func Register(app *fiber.App, serviceName string) {
 
 	// Merchant Service (Port 7002)
 	app.All("/merchants/*", gateway.ProxyRequest("merchant-service:7002"))
+	app.All("/payment-links/*", gateway.ProxyRequest("merchant-service:7002"))
+	app.All("/payment-links", gateway.ProxyRequest("merchant-service:7002"))
 
 	// Admin Service (Port 7003)
 	app.All("/admin/*", gateway.ProxyRequest("admin-service:7003"))

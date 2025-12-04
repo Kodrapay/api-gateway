@@ -52,16 +52,15 @@ func (h *GatewayHandler) ProxyRequest(serviceURL string) fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to read response"})
 		}
 
-		// Copy response headers
+		// Copy response headers, avoid duplicating CORS headers (handled by gateway middleware)
 		for k, v := range resp.Header {
-			for _, val := range v {
-				c.Response().Header.Add(k, val)
+			if k == "Access-Control-Allow-Origin" || k == "Access-Control-Allow-Methods" || k == "Access-Control-Allow-Headers" {
+				continue
+			}
+			if len(v) > 0 {
+				c.Response().Header.Set(k, v[0])
 			}
 		}
-		// Ensure CORS headers are present on proxied responses
-		// c.Set("Access-Control-Allow-Origin", "*")
-		// c.Set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-		// c.Set("Access-Control-Allow-Headers", "*")
 
 		return c.Status(resp.StatusCode).Send(body)
 	}
