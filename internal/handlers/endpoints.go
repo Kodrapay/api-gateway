@@ -1,10 +1,65 @@
 package handlers
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"fmt"
+	"io"
+	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 type GatewayHandler struct{}
 
 func NewGatewayHandler() *GatewayHandler { return &GatewayHandler{} }
+
+// ProxyRequest forwards the request to the appropriate backend service
+func (h *GatewayHandler) ProxyRequest(serviceURL string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Build the target URL
+		path := c.OriginalURL()
+		queryString := string(c.Request().URI().QueryString())
+		targetURL := fmt.Sprintf("http://%s%s", serviceURL, path)
+		if queryString != "" {
+			targetURL += "?" + queryString
+		}
+
+		// Create a new request with body
+		req, err := http.NewRequest(string(c.Method()), targetURL, c.Request().BodyStream())
+		if err != nil {
+			return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "failed to create proxy request"})
+		}
+
+		// Copy headers
+		c.Request().Header.VisitAll(func(key, value []byte) {
+			if string(key) != "Host" {
+				req.Header.Set(string(key), string(value))
+			}
+		})
+
+		// Send the request
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "service unavailable"})
+		}
+		defer resp.Body.Close()
+
+		// Read response body
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to read response"})
+		}
+
+		// Copy response headers
+		for k, v := range resp.Header {
+			for _, val := range v {
+				c.Response().Header.Add(k, val)
+			}
+		}
+
+		return c.Status(resp.StatusCode).Send(body)
+	}
+}
 
 func (h *GatewayHandler) Routes(c *fiber.Ctx) error {
 	routes := fiber.Map{
