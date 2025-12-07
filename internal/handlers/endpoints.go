@@ -16,13 +16,9 @@ func NewGatewayHandler() *GatewayHandler { return &GatewayHandler{} }
 // ProxyRequest forwards the request to the appropriate backend service
 func (h *GatewayHandler) ProxyRequest(serviceURL string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Build the target URL
+		// Build the target URL - OriginalURL() already includes query params
 		path := c.OriginalURL()
-		queryString := string(c.Request().URI().QueryString())
 		targetURL := fmt.Sprintf("http://%s%s", serviceURL, path)
-		if queryString != "" {
-			targetURL += "?" + queryString
-		}
 
 		// Get the raw body bytes before any parsing
 		bodyBytes := c.Request().Body()

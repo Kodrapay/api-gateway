@@ -19,10 +19,11 @@ func Register(app *fiber.App, serviceName string) {
 
 	// Merchant Service (Port 7002)
 	app.All("/merchants/*", gateway.ProxyRequest("merchant-service:7002"))
-	app.All("/payment-links/*", gateway.ProxyRequest("merchant-service:7002"))
+	app.All("/merchant/me", gateway.ProxyRequest("merchant-service:7002"))
+	app.All("/payment-links/:id", gateway.ProxyRequest("merchant-service:7002"))
 	app.All("/payment-links", gateway.ProxyRequest("merchant-service:7002"))
-	app.All("/kyc/*", gateway.ProxyRequest("merchant-service:7002"))
-	app.All("/kyc", gateway.ProxyRequest("merchant-service:7002"))
+	// Backward compatibility for singular path
+	app.All("/merchant/*", gateway.ProxyRequest("merchant-service:7002"))
 
 	// Admin Service (Port 7003)
 	app.All("/admin/*", gateway.ProxyRequest("admin-service:7003"))
@@ -58,12 +59,16 @@ func Register(app *fiber.App, serviceName string) {
 
 	// Dispute Service (Port 7013)
 	app.All("/disputes/*", gateway.ProxyRequest("dispute-service:7013"))
+	app.All("/disputes", gateway.ProxyRequest("dispute-service:7013"))
 
 	// Notification Service (Port 7014)
 	app.All("/notifications/*", gateway.ProxyRequest("notification-service:7014"))
 
-	// Compliance Service (Port 7015)
+	// Compliance Service (Port 7015) - KYC and AML
 	app.All("/compliance/*", gateway.ProxyRequest("compliance-service:7015"))
+	// Route KYC requests to compliance service
+	app.All("/kyc/*", gateway.ProxyRequest("compliance-service:7015"))
+	app.All("/kyc", gateway.ProxyRequest("compliance-service:7015"))
 
 	// Encryption Service (Port 7016)
 	app.All("/encrypt/*", gateway.ProxyRequest("encryption-service:7016"))
