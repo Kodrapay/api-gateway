@@ -34,6 +34,8 @@ func Register(app *fiber.App, serviceName string) {
 
 	// Checkout Service (Port 7005)
 	app.All("/checkout/*", gateway.ProxyRequest("checkout-service:7005"))
+	app.All("/payment-links", gateway.ProxyRequest("checkout-service:7005"))
+	app.All("/payment-links/*", gateway.ProxyRequest("checkout-service:7005"))
 
 	// Webhook Service (Port 7006)
 	app.All("/webhooks/*", gateway.ProxyRequest("webhook-service:7006"))
